@@ -519,7 +519,7 @@ public final class DecodeServlet extends HttpServlet {
         ResourceBundle bundle = ResourceBundle.getBundle("Strings", locale);
         String title = bundle.getString("response.error." + key + ".title");
         String text = bundle.getString("response.error." + key + ".text");
-        QRRes qrRes = new QRRes(1, "err: " + key);
+        QRRes qrRes = new QRRes(1, "解析失败");
         ObjectMapper mapper = new ObjectMapper();
         response.setContentType(MediaType.JSON_UTF_8.toString());
         response.setCharacterEncoding(StandardCharsets.UTF_8.name());
