@@ -68,7 +68,7 @@ import java.util.logging.Logger;
         maxRequestSize = 1L << 26, // ~64MB
         fileSizeThreshold = 1 << 23, // ~8MB
         location = "/tmp")
-@WebServlet(value = "/qrcode/decode", loadOnStartup = 1)
+@WebServlet(value = "/w/decode", loadOnStartup = 1)
 public final class DecodeServlet extends HttpServlet {
 
     private static final Logger log = Logger.getLogger(DecodeServlet.class.getName());
