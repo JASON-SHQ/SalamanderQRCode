@@ -128,7 +128,7 @@ public final class DecodeServlet extends HttpServlet {
 
         String imageURIString = request.getParameter("u");
         if (imageURIString == null || imageURIString.isEmpty()) {
-            log.info("URI was empty!");
+            log.info("Whoops, URI was empty!");
             errorResponse(request, response, "badurl");
             return;
         }
