@@ -193,10 +193,10 @@ public final class DecodeServlet extends HttpServlet {
             return;
         }
 
-        if (destHostTracker.isBanned(imageURL.getHost())) {
-            log.info("Temporarily not requesting from host: " + imageURIString);
-            errorResponse(request, response, "badurl");
-        }
+//        if (destHostTracker.isBanned(imageURL.getHost())) {
+//            log.info("Temporarily not requesting from host: " + imageURIString);
+//            errorResponse(request, response, "badurl");
+//        }
 
         HttpURLConnection connection;
         try {

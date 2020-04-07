@@ -20,7 +20,7 @@ import java.util.concurrent.TimeUnit;
  *
  * @author Sean Owen
  */
-@WebFilter({"/w/decode", "/w/chart"})
+@WebFilter({"/w/chart"})
 public final class DoSFilter implements Filter {
 
   private Timer timer;
