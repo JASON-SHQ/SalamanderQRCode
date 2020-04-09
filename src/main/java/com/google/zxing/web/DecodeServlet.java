@@ -128,7 +128,7 @@ public final class DecodeServlet extends HttpServlet {
 
         String imageURIString = request.getParameter("u");
         if (imageURIString == null || imageURIString.isEmpty()) {
-            log.info("Whoops, URI was empty!");
+            log.info("URI was empty");
             errorResponse(request, response, "badurl");
             return;
         }
@@ -170,7 +170,7 @@ public final class DecodeServlet extends HttpServlet {
                 return;
             }
             try {
-                processImage(image, request, response);
+                processImage(image, request, response, 0);
             } finally {
                 image.flush();
             }
@@ -331,7 +331,7 @@ public final class DecodeServlet extends HttpServlet {
                 return;
             }
 
-            processImage(image, request, response);
+            processImage(image, request, response, 0);
         } finally {
             image.flush();
         }
@@ -339,7 +339,7 @@ public final class DecodeServlet extends HttpServlet {
 
     private static void processImage(BufferedImage image,
                                      HttpServletRequest request,
-                                     HttpServletResponse response) throws IOException, ServletException {
+                                     HttpServletResponse response, int ImageFilterCount) throws IOException, ServletException {
 
         LuminanceSource source = new BufferedImageLuminanceSource(image);
         BinaryBitmap bitmap = new BinaryBitmap(new GlobalHistogramBinarizer(source));
@@ -397,18 +397,18 @@ public final class DecodeServlet extends HttpServlet {
                 }
             }
 
-            if (results.isEmpty()) {
-                try {
-                    throw savedException == null ? NotFoundException.getNotFoundInstance() : savedException;
-                } catch (FormatException | ChecksumException e) {
-                    log.info(e.toString());
-                    errorResponse(request, response, "format");
-                } catch (ReaderException e) { // Including NotFoundException
-                    log.info(e.toString());
-                    errorResponse(request, response, "notfound");
-                }
-                return;
-            }
+//            if (results.isEmpty()) {
+//                try {
+//                    throw savedException == null ? NotFoundException.getNotFoundInstance() : savedException;
+//                } catch (FormatException | ChecksumException e) {
+//                    log.info(e.toString());
+//                    errorResponse(request, response, "format");
+//                } catch (ReaderException e) { // Including NotFoundException
+//                    log.info(e.toString());
+//                    errorResponse(request, response, "notfound");
+//                }
+//                return;
+//            }
 
         } catch (RuntimeException re) {
             // Call out unexpected errors in the log clearly
@@ -434,7 +434,7 @@ public final class DecodeServlet extends HttpServlet {
                 if(ImageFilterCount == 0) {
                     ImageFilterCount++;
                     BufferedImage imageFilter = blurAndSharpImage(image);
-                    processImage(imageFilter, request, response);
+                    processImage(imageFilter, request, response, ImageFilterCount);
                 } else {
                     responseJSON(results, response);
                 }
@@ -442,7 +442,6 @@ public final class DecodeServlet extends HttpServlet {
         }
     }
 
-    private static int ImageFilterCount = 0;
 
     private static BufferedImage blurAndSharpImage(BufferedImage image) {
         GaussianFilter filter = new GaussianFilter(5);
@@ -455,24 +454,23 @@ public final class DecodeServlet extends HttpServlet {
     private static void responseJSON(Collection<Result> results, HttpServletResponse response) throws IOException {
         ObjectMapper mapper = new ObjectMapper();
         int errno = 0;
-        String text = null;
+        String errmsg = "解析成功";
+        String parsedText = "";
+
         if(results != null && results.size() > 0) {
             for (Result result : results) {
                 ParsedResult parsedResult = ResultParser.parseResult(result);
-                text = result.getText();
-
-                if (text == null) {
-                    errno = 1;
-                    text = "";
-                } else {
-                    text = XmlEscapers.xmlContentEscaper().escape(text);
+                if (result.getBarcodeFormat() == BarcodeFormat.QR_CODE) {
+                    parsedText = result.getText();
+                    parsedText = XmlEscapers.xmlContentEscaper().escape(parsedText);
                 }
             }
-        } else {
-            errno = 1;
-            text = "解析失败";
         }
-        QRRes qrRes = new QRRes(errno, text);
+        if (parsedText == null || parsedText.length() <= 0) {
+            errno = 1;
+            errmsg = "解析失败";
+        }
+        QRRes qrRes = new QRRes(errno, errno==0?parsedText:errmsg);
         response.setContentType(MediaType.JSON_UTF_8.toString());
         response.setCharacterEncoding(StandardCharsets.UTF_8.name());
         try (Writer out = new OutputStreamWriter(response.getOutputStream(), StandardCharsets.UTF_8)) {
@@ -491,7 +489,7 @@ public final class DecodeServlet extends HttpServlet {
         ResourceBundle bundle = ResourceBundle.getBundle("Strings", locale);
         String title = bundle.getString("response.error." + key + ".title");
         String text = bundle.getString("response.error." + key + ".text");
-        QRRes qrRes = new QRRes(1, "解析失败");
+        QRRes qrRes = new QRRes(1, "err: " + key);
         ObjectMapper mapper = new ObjectMapper();
         response.setContentType(MediaType.JSON_UTF_8.toString());
         response.setCharacterEncoding(StandardCharsets.UTF_8.name());
