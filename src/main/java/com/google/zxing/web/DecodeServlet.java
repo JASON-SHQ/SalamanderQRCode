@@ -125,7 +125,6 @@ public final class DecodeServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request,
                          HttpServletResponse response) throws ServletException, IOException {
-
         String imageURIString = request.getParameter("u");
         if (imageURIString == null || imageURIString.isEmpty()) {
             log.info("URI was empty");
